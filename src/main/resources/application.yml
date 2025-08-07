@@ -1,0 +1,90 @@
+# 应用服务配置
+server:
+  port: 7090
+  servlet:
+    context-path: /api
+    session:
+      timeout: PT60M
+    favicon:
+      enabled: false
+
+# Spring MVC 配置
+spring:
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
+
+  # 数据库配置
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/easypan?serverTimezone=GMT%2B8&useUnicode=true&characterEncoding=utf8&autoReconnect=true&allowMultiQueries=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      pool-name: HikariCPDatasource
+      minimum-idle: 5
+      idle-timeout: 180000
+      maximum-pool-size: 10
+      auto-commit: true
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+
+  # 邮件配置
+  mail:
+    host: smtp.qq.com
+    port: 465
+    username: test@qq.com
+    password: "123456"
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+        debug: true
+
+  # Redis 配置
+  redis:
+    database: 0
+    host: 127.0.0.1
+    port: 6379
+    jedis:
+      pool:
+        max-active: 20
+        max-wait: -1
+        max-idle: 10
+        min-idle: 0
+    timeout: 2000
+
+# 项目目录配置
+project:
+  folder: e:/webser/web_app/easypan/
+
+# 日志配置
+log:
+  root:
+    level: debug
+
+# 管理员配置
+admin:
+  emails: test@qq.com
+
+# 环境配置
+dev: false
+
+# QQ登录配置
+qq:
+  app:
+    id: "12333"
+    key: "2222222"
+  url:
+    authorization: https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=%s&redirect_uri=%s&state=%s
+    access:
+      token: https://graph.qq.com/oauth2.0/token?grant_type=authorization_code&client_id=%s&client_secret=%s&code=%s&redirect_uri=%s
+    openid: https://graph.qq.com/oauth2.0/me?access_token=%S
+    user:
+      info: https://graph.qq.com/user/get_user_info?access_token=%s&oauth_consumer_key=%s&openid=%s
+    redirect: http://easypan.wuhancoder.com/qqlogincalback
