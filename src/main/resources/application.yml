@@ -18,9 +18,9 @@ spring:
 
   # 数据库配置
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/easypan?serverTimezone=GMT%2B8&useUnicode=true&characterEncoding=utf8&autoReconnect=true&allowMultiQueries=true
+    url: jdbc:mysql://127.0.0.1:3306/panwe?serverTimezone=GMT%2B8&useUnicode=true&characterEncoding=utf8&autoReconnect=true&allowMultiQueries=true
     username: root
-    password: root
+    password: 159357
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       pool-name: HikariCPDatasource
@@ -36,8 +36,8 @@ spring:
   mail:
     host: smtp.qq.com
     port: 465
-    username: test@qq.com
-    password: "123456"
+    username: 198466453@qq.com
+    password: sendvbnfzahgbifh
     default-encoding: UTF-8
     properties:
       mail:
@@ -61,7 +61,7 @@ spring:
 
 # 项目目录配置
 project:
-  folder: e:/webser/web_app/easypan/
+  folder: ./others
 
 # 日志配置
 log:
@@ -70,7 +70,7 @@ log:
 
 # 管理员配置
 admin:
-  emails: test@qq.com
+  emails: 198466453@qq.com
 
 # 环境配置
 dev: false
