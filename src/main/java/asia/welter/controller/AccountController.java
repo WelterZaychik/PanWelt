@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
+import static asia.welter.entity.vo.ResponseVo.fail;
 import static asia.welter.entity.vo.ResponseVo.success;
 
 @RestController("AccountController")
@@ -47,7 +48,8 @@ public class AccountController {
         try{
 
             if (!checkCode.equalsIgnoreCase(session.getAttribute(Constants.CHECK_CODE_KEY_EMAIL).toString())){
-                throw new BusinessException("图片验证码不正确");
+//                throw new BusinessException("图片验证码不正确");
+                return fail(505,"图片验证码不正确");
             }
 
             emailCodeService.sendEmailCode(email,type);
@@ -55,7 +57,6 @@ public class AccountController {
         }finally {
             session.removeAttribute(Constants.CHECK_CODE_KEY_EMAIL);
         }
-
 
     }
 }
