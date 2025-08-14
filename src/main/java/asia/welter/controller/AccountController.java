@@ -1,5 +1,6 @@
 package asia.welter.controller;
 
+import asia.welter.annotation.GlobalInterceptor;
 import asia.welter.entity.constants.Constants;
 import asia.welter.entity.dto.CreateImageCode;
 import asia.welter.entity.vo.ResponseVo;
@@ -44,6 +45,7 @@ public class AccountController {
     }
 
     @PostMapping("sendEmailCode")
+    @GlobalInterceptor
     public ResponseVo sendEmailCode(HttpSession session, String email, String checkCode, Integer type){
         try{
 

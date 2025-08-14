@@ -107,6 +107,7 @@
       <artifactId>aspectjweaver</artifactId>
       <version>${aspectjweaver.version}</version>
     </dependency>
+
     <!--fastjson-->
     <dependency>
       <groupId>com.alibaba</groupId>
