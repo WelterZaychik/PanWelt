@@ -9,6 +9,9 @@ import org.springframework.stereotype.Component;
 @Data
 public class AppConfig {
 
+    @Value("${admin.emails:}")
+    private String adminEmails;
+
     @Value("${spring.mail.username:}")
     private String sendUserName;
 

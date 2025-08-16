@@ -1,8 +1,11 @@
 package asia.welter.controller;
 
 import asia.welter.annotation.GlobalInterceptor;
+import asia.welter.annotation.VerifyParam;
 import asia.welter.entity.constants.Constants;
 import asia.welter.entity.dto.CreateImageCode;
+import asia.welter.entity.dto.SessionWebUserDto;
+import asia.welter.entity.enums.VerifyRegexEnum;
 import asia.welter.entity.vo.ResponseVo;
 import asia.welter.exception.BusinessException;
 import asia.welter.service.EmailCodeService;
@@ -45,17 +48,65 @@ public class AccountController {
     }
 
     @PostMapping("sendEmailCode")
-    @GlobalInterceptor
-    public ResponseVo sendEmailCode(HttpSession session, String email, String checkCode, Integer type){
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVo sendEmailCode(HttpSession session, @VerifyParam(required = true,regex = VerifyRegexEnum.EMAIL,max = 150) String email
+            , @VerifyParam(required = true) String checkCode
+            , @VerifyParam(required = true)Integer type){
         try{
 
             if (!checkCode.equalsIgnoreCase(session.getAttribute(Constants.CHECK_CODE_KEY_EMAIL).toString())){
-//                throw new BusinessException("图片验证码不正确");
-                return fail(505,"图片验证码不正确");
+                throw new BusinessException("图片验证码不正确");
+//                return fail(505,"图片验证码不正确");
             }
 
             emailCodeService.sendEmailCode(email,type);
             return success(null);
+        }finally {
+            session.removeAttribute(Constants.CHECK_CODE_KEY_EMAIL);
+        }
+
+    }
+
+    @PostMapping("register")
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVo register(HttpSession session
+            , @VerifyParam(required = true,regex = VerifyRegexEnum.EMAIL,max = 150) String email
+            , @VerifyParam(required = true) String nickName
+            , @VerifyParam(required = true,min = 8 , max = 10) String password
+            , @VerifyParam(required = true) String checkCode
+            , @VerifyParam(required = true) String emailCode){
+        try{
+
+
+            if (!checkCode.equalsIgnoreCase(session.getAttribute(Constants.CHECK_CODE_KEY).toString())){
+                throw new BusinessException("图片验证码不正确");
+
+            }
+
+            usersService.register(email,nickName,password,emailCode);
+            return success(null);
+        }finally {
+            session.removeAttribute(Constants.CHECK_CODE_KEY_EMAIL);
+        }
+
+    }
+
+    @PostMapping("login")
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVo login(HttpSession session
+            , @VerifyParam(required = true) String email
+            , @VerifyParam(required = true) String password
+            , @VerifyParam(required = true) String checkCode){
+        try{
+
+            if (!checkCode.equalsIgnoreCase(session.getAttribute(Constants.CHECK_CODE_KEY).toString())){
+                throw new BusinessException("图片验证码不正确");
+
+            }
+
+            SessionWebUserDto login = usersService.login(email, password);
+            session.setAttribute(Constants.SESSION_KEY,login);
+            return success(login);
         }finally {
             session.removeAttribute(Constants.CHECK_CODE_KEY_EMAIL);
         }

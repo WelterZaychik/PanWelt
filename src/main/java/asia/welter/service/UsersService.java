@@ -1,5 +1,8 @@
 package asia.welter.service;
 
+import asia.welter.annotation.VerifyParam;
+import asia.welter.entity.dto.SessionWebUserDto;
+import asia.welter.entity.enums.VerifyRegexEnum;
 import asia.welter.entity.po.Users;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -10,4 +13,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface UsersService extends IService<Users> {
 
+    void register(String email, String nickName, String password, String emailCode);
+
+    SessionWebUserDto login(String email, String password);
 }

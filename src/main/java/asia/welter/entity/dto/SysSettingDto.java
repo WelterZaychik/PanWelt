@@ -13,5 +13,5 @@ public class SysSettingDto implements Serializable {
 
     private String registerEmailContent = "您好，您的邮箱验证码是 ： %s ， 15分钟有效";
 
-    private Integer userInitUseSpance = 5 ;
+    private Integer userInitUseSpace = 5 ;
 }

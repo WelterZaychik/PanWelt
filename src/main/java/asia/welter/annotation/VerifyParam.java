@@ -7,6 +7,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * min 最短长度限制
+ * max 最长长度限制
+ * required 是否可以为null
+ * regex 使用什么正则匹配
+ */
+
 @Target({ElementType.PARAMETER,ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface VerifyParam {

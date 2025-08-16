@@ -24,6 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.mail.internet.MimeMessage;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 
@@ -82,6 +84,23 @@ public class EmailCodeServiceImpl extends ServiceImpl<EmailCodeMapper, EmailCode
         emailCode.setCode(code);
         emailCode.setStatus(Constants.ZERO);
         emailCodeMapper.insert(emailCode);
+    }
+
+    @Override
+    public void checkEmailCode(String email, String emailCode) {
+        EmailCode emailCode1 = emailCodeMapper.selectOne(new LambdaQueryWrapper<EmailCode>().eq(EmailCode::getEmail,email).eq(EmailCode::getCode,emailCode));
+        if (emailCode1 == null) {
+            throw new BusinessException("邮箱验证码不正确");
+        }
+
+        if (emailCode1.getStatus() == Constants.ONE || Duration.between(emailCode1.getCreateTime(), LocalDateTime.now()).toMinutes() > Constants.LENGTH_15 * 1000 * 60) {
+            throw new BusinessException("邮箱验证码已失效");
+        }
+
+        emailCodeMapper.update(null, new LambdaUpdateWrapper<EmailCode>()
+                .eq(EmailCode::getEmail,email)
+                .eq(EmailCode::getStatus,Constants.ZERO)
+                .set(EmailCode::getStatus,Constants.ONE));
     }
 
     private void sendMailCode(String toEmail , String code){

@@ -3,7 +3,6 @@ package asia.welter.exception;
 import asia.welter.entity.enums.ResponseCodeEnum;
 import lombok.Getter;
 
-
 public class BusinessException extends RuntimeException {
 
     private ResponseCodeEnum codeEnum;
@@ -20,6 +19,7 @@ public class BusinessException extends RuntimeException {
     public BusinessException(String message) {
         super(message);
         this.message = message;
+        this.code = ResponseCodeEnum.CODE_500.getCode();
     }
 
     public BusinessException(Throwable e) {
