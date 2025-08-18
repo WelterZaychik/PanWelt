@@ -43,9 +43,10 @@ public class Constants {
 
     public static final String AVATAR_SUFFIX = ".jpg";
 
-    public static final String FILE_FOLDER_AVATAR_NAME = "avatar/";
+    public static final String FILE_FOLDER_AVATAR_NAME = "/avatar/";
 
-    public static final String AVATAR_DEFUALT = "default_avatar.jpg";
+    public static final String AVATAR_DEFAULT = "/default_avatar.jpg";
+//    public static final String AVATAR_DEFAULT = "https://img.88icon.com/download/jpg/20200901/3e9ce3813b7199ea9588eeb920f41208_512_512.jpg";
 
     public static final String VIEW_OBJ_RESULT_KEY = "result";
 

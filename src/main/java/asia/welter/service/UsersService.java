@@ -16,4 +16,6 @@ public interface UsersService extends IService<Users> {
     void register(String email, String nickName, String password, String emailCode);
 
     SessionWebUserDto login(String email, String password);
+
+    void resetPwd(String email,String newPwd,String emailCode);
 }

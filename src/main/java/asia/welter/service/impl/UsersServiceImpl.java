@@ -109,10 +109,24 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users>
         //用户空间
         UserSpaceDto userSpaceDto = new UserSpaceDto();
 //        userSpaceDto.setTotalSpace();
+        //TODO 查询当前用户已经使用空间总和
         userSpaceDto.setUserSpace(users.getTotalSpace());
         redisComponent.saveUserSpaceUse(users.getUserId(), userSpaceDto);
 
         return null;
+    }
+
+    @Override
+    @Transactional(rollbackFor = BusinessException.class)
+    public void resetPwd(String email, String newPwd, String emailCode) {
+        Users tmpUser = usersMapper.selectOne(new LambdaQueryWrapper<Users>().eq(Users::getEmail, email));
+        if (tmpUser == null) {
+            throw new BusinessException("邮箱账号不存在");
+        }
+        emailCodeService.checkEmailCode(email, emailCode);
+
+        tmpUser.setPassword(StringTools.encodeByMD5(newPwd));
+        usersMapper.updateById(tmpUser);
     }
 }
 

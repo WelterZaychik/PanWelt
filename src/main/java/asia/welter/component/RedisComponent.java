@@ -25,4 +25,17 @@ public class RedisComponent {
         redisUtils.setex(Constants.REDIS_KEY_USER_SPACE_USE+userId, userSpaceDto,Constants.REDIS_KEY_EXPIRES_DAY);
 
     }
+
+    public UserSpaceDto getUserSpaceUse(String userId) {
+        UserSpaceDto userSpaceDto = (UserSpaceDto) redisUtils.get(Constants.REDIS_KEY_USER_SPACE_USE + userId);
+        if (userSpaceDto == null) {
+            UserSpaceDto spaceDto = new UserSpaceDto();
+
+            //TODO 查询当前用户已经使用空间总和
+            spaceDto.setUserSpace(0L);
+            spaceDto.setTotalSpace(getSysSettingDto().getUserInitUseSpace()*Constants.MB);
+            saveUserSpaceUse(userId, spaceDto);
+        }
+        return userSpaceDto;
+    }
 }
