@@ -113,7 +113,7 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users>
         userSpaceDto.setUserSpace(users.getTotalSpace());
         redisComponent.saveUserSpaceUse(users.getUserId(), userSpaceDto);
 
-        return null;
+        return sessionWebUserDto;
     }
 
     @Override

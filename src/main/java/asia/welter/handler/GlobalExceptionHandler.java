@@ -13,22 +13,53 @@ import java.time.LocalDateTime;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * 处理业务异常
+     */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                ex.getCode(),  // 使用你的CODE_600
+        // 根据业务码自动匹配HTTP状态码
+        HttpStatus httpStatus = mapCodeToHttpStatus(ex.getCode());
+        ErrorResponse response = new ErrorResponse(
+                ex.getCode(),
                 ex.getMessage(),
                 LocalDateTime.now()
         );
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR); // 或其他适当的状态码
+        return new ResponseEntity<>(response, httpStatus);
     }
 
-    // 错误响应DTO
+    /**
+     * 业务码转HTTP状态码
+     */
+    private HttpStatus mapCodeToHttpStatus(Integer code) {
+        if (code == null) {
+            return HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+
+        switch (code) {
+            case 200:
+                return HttpStatus.OK;
+            case 404:
+                return HttpStatus.NOT_FOUND;
+            case 600:
+                return HttpStatus.BAD_REQUEST;
+            case 901:
+                return HttpStatus.UNAUTHORIZED;
+            case 902:
+            case 903:
+                return HttpStatus.FORBIDDEN;
+            default:
+                return HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+    }
+
+    /**
+     * 统一错误响应格式
+     */
     @Data
-    @AllArgsConstructor
     private static class ErrorResponse {
-        private int code;
-        private String message;
-        private LocalDateTime timestamp;
+        private final Integer code;
+        private final String message;
+        private final LocalDateTime timestamp;
     }
 }

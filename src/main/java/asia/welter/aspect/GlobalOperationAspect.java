@@ -2,6 +2,8 @@ package asia.welter.aspect;
 
 import asia.welter.annotation.GlobalInterceptor;
 import asia.welter.annotation.VerifyParam;
+import asia.welter.entity.constants.Constants;
+import asia.welter.entity.dto.SessionWebUserDto;
 import asia.welter.entity.enums.ResponseCodeEnum;
 import asia.welter.exception.BusinessException;
 import asia.welter.utils.StringTools;
@@ -56,9 +58,9 @@ public class GlobalOperationAspect {
             /**
              * 校验登录
              */
-//            if (interceptor.checkLogin() || interceptor.checkAdmin()) {
-//                checkLogin(interceptor.checkAdmin());
-//            }
+            if (interceptor.checkLogin() || interceptor.checkAdmin()) {
+                checkLogin(interceptor.checkAdmin());
+            }
             /**
              * 校验参数
              */
@@ -74,6 +76,19 @@ public class GlobalOperationAspect {
         } catch (Throwable e) {
             logger.error("全局拦截器异常", e);
             throw new BusinessException(ResponseCodeEnum.CODE_500);
+        }
+    }
+
+    private void checkLogin(Boolean checkAdmin) throws BusinessException {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        HttpSession session = request.getSession();
+        SessionWebUserDto userDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
+        if (null == userDto) {
+            throw new BusinessException(ResponseCodeEnum.CODE_901);
+        }
+
+        if (checkAdmin&&!userDto.getIsAdmin()) {
+            throw new BusinessException(ResponseCodeEnum.CODE_404);
         }
     }
 

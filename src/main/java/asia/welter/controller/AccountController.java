@@ -67,15 +67,22 @@ public class AccountController {
     }
 
     @PostMapping("sendEmailCode")
-    @GlobalInterceptor(checkParams = true)
+    @GlobalInterceptor(checkParams = true,checkLogin = false)
     public ResponseVo sendEmailCode(HttpSession session, @VerifyParam(required = true,regex = VerifyRegexEnum.EMAIL,max = 150) String email
             , @VerifyParam(required = true) String checkCode
             , @VerifyParam(required = true)Integer type){
         try{
 
-            if (!checkCode.equalsIgnoreCase(session.getAttribute(Constants.CHECK_CODE_KEY_EMAIL).toString())){
+            // 1. 安全获取验证码并校验
+            Object checkCodeObj = session.getAttribute(Constants.CHECK_CODE_KEY_EMAIL);
+            if (checkCodeObj == null) {
+                throw new BusinessException("验证码未生成或已过期");
+            }
+
+            // 2. 转换为字符串并比较（忽略大小写）
+            String sessionCheckCode = checkCodeObj.toString();
+            if (!sessionCheckCode.equalsIgnoreCase(checkCode)) {
                 throw new BusinessException("图片验证码不正确");
-//                return fail(505,"图片验证码不正确");
             }
 
             emailCodeService.sendEmailCode(email,type);
@@ -87,7 +94,7 @@ public class AccountController {
     }
 
     @PostMapping("register")
-    @GlobalInterceptor(checkParams = true)
+    @GlobalInterceptor(checkParams = true,checkLogin = false)
     public ResponseVo register(HttpSession session
             , @VerifyParam(required = true,regex = VerifyRegexEnum.EMAIL,max = 150) String email
             , @VerifyParam(required = true) String nickName
@@ -97,9 +104,16 @@ public class AccountController {
         try{
 
 
-            if (!checkCode.equalsIgnoreCase(session.getAttribute(Constants.CHECK_CODE_KEY).toString())){
-                throw new BusinessException("图片验证码不正确");
+            // 1. 安全获取验证码并校验
+            Object checkCodeObj = session.getAttribute(Constants.CHECK_CODE_KEY);
+            if (checkCodeObj == null) {
+                throw new BusinessException("验证码未生成或已过期");
+            }
 
+            // 2. 转换为字符串并比较（忽略大小写）
+            String sessionCheckCode = checkCodeObj.toString();
+            if (!sessionCheckCode.equalsIgnoreCase(checkCode)) {
+                throw new BusinessException("图片验证码不正确");
             }
 
             usersService.register(email,nickName,password,emailCode);
@@ -111,16 +125,23 @@ public class AccountController {
     }
 
     @PostMapping("login")
-    @GlobalInterceptor(checkParams = true)
+    @GlobalInterceptor(checkParams = true,checkLogin = false )
     public ResponseVo login(HttpSession session
             , @VerifyParam(required = true) String email
             , @VerifyParam(required = true) String password
             , @VerifyParam(required = true) String checkCode){
         try{
 
-            if (!checkCode.equalsIgnoreCase(session.getAttribute(Constants.CHECK_CODE_KEY).toString())){
-                throw new BusinessException("图片验证码不正确");
+            // 1. 安全获取验证码并校验
+            Object checkCodeObj = session.getAttribute(Constants.CHECK_CODE_KEY);
+            if (checkCodeObj == null) {
+                throw new BusinessException("验证码未生成或已过期");
+            }
 
+            // 2. 转换为字符串并比较（忽略大小写）
+            String sessionCheckCode = checkCodeObj.toString();
+            if (!sessionCheckCode.equalsIgnoreCase(checkCode)) {
+                throw new BusinessException("图片验证码不正确");
             }
 
             SessionWebUserDto login = usersService.login(email, password);
@@ -133,7 +154,7 @@ public class AccountController {
     }
 
     @PostMapping("resetPwd")
-    @GlobalInterceptor(checkParams = true)
+    @GlobalInterceptor(checkParams = true,checkLogin = false )
     public ResponseVo resetPwd(HttpSession session
             , @VerifyParam(required = true,regex = VerifyRegexEnum.EMAIL,max = 150) String email
             , @VerifyParam(required = true,min = 8 , max = 10) String password
@@ -142,9 +163,16 @@ public class AccountController {
         try{
 
 
-            if (!checkCode.equalsIgnoreCase(session.getAttribute(Constants.CHECK_CODE_KEY).toString())){
-                throw new BusinessException("图片验证码不正确");
+            // 1. 安全获取验证码并校验
+            Object checkCodeObj = session.getAttribute(Constants.CHECK_CODE_KEY);
+            if (checkCodeObj == null) {
+                throw new BusinessException("验证码未生成或已过期");
+            }
 
+            // 2. 转换为字符串并比较（忽略大小写）
+            String sessionCheckCode = checkCodeObj.toString();
+            if (!sessionCheckCode.equalsIgnoreCase(checkCode)) {
+                throw new BusinessException("图片验证码不正确");
             }
 
             usersService.resetPwd(email,password,emailCode);
@@ -187,14 +215,14 @@ public class AccountController {
         return success(userInfo);
     }
 
-    @GetMapping("getUseSpace")
+    @PostMapping("getUseSpace")
     public ResponseVo getUseSpace(HttpSession session){
         SessionWebUserDto userInfo = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
         UserSpaceDto userSpaceUse = redisComponent.getUserSpaceUse(userInfo.getUserId());
         return success(userSpaceUse);
     }
 
-    @GetMapping("logout")
+    @PostMapping("logout")
     public ResponseVo logout(HttpSession session){
         session.removeAttribute(Constants.SESSION_KEY);
         return success(null);
