@@ -15,6 +15,10 @@ spring:
   web:
     resources:
       add-mappings: false
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
 
   # 数据库配置
   datasource:
@@ -61,7 +65,7 @@ spring:
 
 # 项目目录配置
 project:
-  folder: ./others
+  folder: D:/WayOfTruth/Project/PanWe/PanWe-java/others
 
 # 日志配置
 log:

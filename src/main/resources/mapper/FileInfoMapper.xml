@@ -31,4 +31,63 @@
         file_type,status,recovery_time,
         del_flag
     </sql>
+
+    <update id="updateFileStatusWithOldStatus">
+        update file_info
+        <set>
+            <if test="updateInfo.fileMd5 != null">
+                file_md5 = #{updateInfo.fileMd5},
+            </if>
+            <if test="updateInfo.filePid != null">
+                file_pid = #{updateInfo.filePid},
+            </if>
+            <if test="updateInfo.fileSize != null">
+                file_size = #{updateInfo.fileSize},
+            </if>
+            <if test="updateInfo.fileName != null">
+                file_name = #{updateInfo.fileName},
+            </if>
+            <if test="updateInfo.fileCover != null">
+                file_cover = #{updateInfo.fileCover},
+            </if>
+            <if test="updateInfo.filePath != null">
+                file_path = #{updateInfo.filePath},
+            </if>
+            <if test="updateInfo.createTime != null">
+                create_time = #{updateInfo.createTime},
+            </if>
+            <if test="updateInfo.lastUpdateTime != null">
+                last_update_time = #{updateInfo.lastUpdateTime},
+            </if>
+            <if test="updateInfo.folderType != null">
+                folder_type = #{updateInfo.folderType},
+            </if>
+            <if test="updateInfo.fileCategory != null">
+                file_category = #{updateInfo.fileCategory},
+            </if>
+            <if test="updateInfo.fileType != null">
+                file_type = #{updateInfo.fileType},
+            </if>
+            <if test="updateInfo.status != null">
+                status = #{updateInfo.status},
+            </if>
+            <if test="updateInfo.recoveryTime != null">
+                recovery_time = #{updateInfo.recoveryTime},
+            </if>
+            <if test="updateInfo.delFlag != null">
+                del_flag = #{updateInfo.delFlag},
+            </if>
+        </set>
+        where file_id = #{fileId}
+        and user_id = #{userId}
+        and status = #{status}
+    </update>
+
+
+
+    <select id="selectByFileIdAndUserId" resultType="asia.welter.entity.po.FileInfo">
+        select
+        <include refid="Base_Column_List"/>
+        from file_info where file_id=#{fileId} and user_id=#{userId}
+    </select>
 </mapper>

@@ -9,6 +9,7 @@ import asia.welter.entity.dto.UserSpaceDto;
 import asia.welter.entity.enums.UserStatusEnum;
 import asia.welter.exception.BusinessException;
 import asia.welter.service.EmailCodeService;
+import asia.welter.service.FileInfoService;
 import asia.welter.utils.StringTools;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -37,6 +38,9 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users>
 
     @Autowired
     private EmailCodeService emailCodeService;
+
+    @Autowired
+    private FileInfoService fileInfoService;
 
     @Autowired
     private UsersMapper usersMapper;
@@ -108,11 +112,9 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users>
 
         //用户空间
         UserSpaceDto userSpaceDto = new UserSpaceDto();
-//        userSpaceDto.setTotalSpace();
-        //TODO 查询当前用户已经使用空间总和
-        userSpaceDto.setUserSpace(users.getTotalSpace());
+        userSpaceDto.setUserSpace(fileInfoService.getUserUseSpace(users.getUserId()));
+        userSpaceDto.setTotalSpace(users.getTotalSpace());
         redisComponent.saveUserSpaceUse(users.getUserId(), userSpaceDto);
-
         return sessionWebUserDto;
     }
 

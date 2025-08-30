@@ -7,6 +7,7 @@ import lombok.Data;
 
 @Data
 public class BaseParam {
+    private SimplePage simplePage;
     private Integer pageNo = 1;      // 默认第一页
     private Integer pageSize = 20;   // 默认每页20条
     private String orderBy;

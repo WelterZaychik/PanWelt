@@ -2,6 +2,7 @@ package asia.welter.mapper;
 
 import asia.welter.entity.po.Users;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
 * @author Welt
@@ -11,6 +12,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 */
 public interface UsersMapper extends BaseMapper<Users> {
 
+    Integer updateUserSpace(@Param("userId") String userId, @Param("useSpace") Long useSpace, @Param("totalSpace") Long totalSpace);
 }
 
 
