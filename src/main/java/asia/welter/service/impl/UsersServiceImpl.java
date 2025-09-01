@@ -112,7 +112,7 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users>
 
         //用户空间
         UserSpaceDto userSpaceDto = new UserSpaceDto();
-        userSpaceDto.setUserSpace(fileInfoService.getUserUseSpace(users.getUserId()));
+        userSpaceDto.setUseSpace(fileInfoService.getUserUseSpace(users.getUserId()));
         userSpaceDto.setTotalSpace(users.getTotalSpace());
         redisComponent.saveUserSpaceUse(users.getUserId(), userSpaceDto);
         return sessionWebUserDto;

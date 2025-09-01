@@ -59,7 +59,7 @@ public class RedisComponent {
 
             Users tempUser = usersMapper.selectOne(new LambdaQueryWrapper<Users>().eq(Users::getUserId, userId));
 
-            spaceDto.setUserSpace(tempUser.getUseSpace());
+            spaceDto.setUseSpace(tempUser.getUseSpace());
             spaceDto.setTotalSpace(getSysSettingDto().getUserInitUseSpace()*Constants.MB);
             saveUserSpaceUse(userId, spaceDto);
         }
@@ -69,7 +69,7 @@ public class RedisComponent {
     public UserSpaceDto resetUserSpaceUse(String userId) {
         UserSpaceDto spaceDto = new UserSpaceDto();
         Long userSpace = fileInfoMapper.selectUserUsedSpace(userId);
-        spaceDto.setUserSpace(userSpace);
+        spaceDto.setUseSpace(userSpace);
 
         Users users = usersMapper.selectById(userId);
 //        UserInfo userInfo = this.userInfoMapper.selectByUserId(userId);

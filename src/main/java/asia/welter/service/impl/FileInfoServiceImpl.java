@@ -22,6 +22,7 @@ import asia.welter.utils.ProcessUtils;
 import asia.welter.utils.ScaleFilter;
 import asia.welter.utils.StringTools;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -47,6 +48,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
 * @author Welt
@@ -75,25 +78,14 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
 
     @Override
     public PaginationResultVO findListByPage(FileInfoQuery query) {
-        int pageSize = query.getPageSize()==null ? 15 : query.getPageNo();
-        int pageNo = query.getPageNo()==null ? 1 : query.getPageNo();
-        Page<FileInfo> page = new Page(pageNo, pageSize);
-//        Page<FileInfo> page = query.toPage();
-        query.handleOrderBy(page);
-        LambdaQueryWrapper<FileInfo> wrapper = new LambdaQueryWrapper<>();
-        wrapper.orderByDesc(FileInfo::getLastUpdateTime);
-        Page<FileInfo> resultPage = fileInfoMapper.selectPage(page,wrapper);
+        int count = this.findCountByParam(query);
+        int pageSize = query.getPageSize() == null ? 15 : query.getPageSize();
 
-        PaginationResultVO resultVO =new PaginationResultVO(
-                (int) resultPage.getTotal(),   // totalCount
-                (int) resultPage.getPages(),   // pageSize，
-                (int) resultPage.getCurrent(), // pageNo
-                (int) resultPage.getTotal(),   //  pageTotal
-                resultPage.getRecords()        // list
-        );
-
-
-        return resultVO;
+        SimplePage page = new SimplePage(query.getPageNo(), count, pageSize);
+        query.setSimplePage(page);
+        List<FileInfo> list = this.findListByParam(query);
+        PaginationResultVO<FileInfo> result = new PaginationResultVO(count, page.getPageSize(), page.getPageNo(), page.getPageTotal(), list);
+        return result;
     }
 
     @Override
@@ -120,7 +112,7 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
 
                 //判断数据库中是否已存在
                 if (fileInfo != null){
-                    if (fileInfo.getFileSize() + userSpaceDto.getUserSpace() > userSpaceDto.getTotalSpace()){
+                    if (fileInfo.getFileSize() + userSpaceDto.getUseSpace() > userSpaceDto.getTotalSpace()){
                         throw new BusinessException(ResponseCodeEnum.CODE_904);
                     }
                     fileInfo.setFileId(fileId);
@@ -244,54 +236,7 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
 
     @Override
     public List<FileInfo> findListByParam(FileInfoQuery fileInfoQuery) {
-        // 创建查询条件包装器
-        LambdaQueryWrapper<FileInfo> wrapper = new LambdaQueryWrapper<>();
-
-        // 添加基本查询条件
-        if (StringUtils.isNotBlank(fileInfoQuery.getFileName())) {
-            wrapper.like(FileInfo::getFileName, fileInfoQuery.getFileName());
-        }
-
-        if (fileInfoQuery.getFileType() != null) {
-            wrapper.eq(FileInfo::getFileType, fileInfoQuery.getFileType());
-        }
-
-        if (fileInfoQuery.getUserId() != null) {
-            wrapper.eq(FileInfo::getUserId, fileInfoQuery.getUserId());
-        }
-
-        if (fileInfoQuery.getStatus() != null) {
-            wrapper.eq(FileInfo::getStatus, fileInfoQuery.getStatus());
-        }
-
-        if (fileInfoQuery.getCreateTimeStart() != null && fileInfoQuery.getCreateTimeEnd() != null) {
-            wrapper.between(FileInfo::getCreateTime, fileInfoQuery.getCreateTimeStart(), fileInfoQuery.getCreateTimeEnd());
-        } else {
-            if (fileInfoQuery.getCreateTimeStart() != null) {
-                wrapper.ge(FileInfo::getCreateTime, fileInfoQuery.getCreateTimeStart());
-            }
-            if (fileInfoQuery.getCreateTimeEnd() != null) {
-                wrapper.le(FileInfo::getCreateTime, fileInfoQuery.getCreateTimeEnd());
-            }
-        }
-
-        // 添加排序条件
-        if (StringUtils.isNotBlank(fileInfoQuery.getOrderBy())) {
-            // 处理排序，防止SQL注入
-            handleOrderBy(wrapper, fileInfoQuery.getOrderBy());
-        } else {
-            // 默认排序
-            wrapper.orderByDesc(FileInfo::getCreateTime);
-        }
-
-        // 处理分页
-        if (fileInfoQuery.getSimplePage() != null) {
-            SimplePage simplePage = fileInfoQuery.getSimplePage();
-            wrapper.last("LIMIT " + simplePage.getStart() + ", " + (simplePage.getEnd() - simplePage.getStart()));
-        }
-
-        // 执行查询
-        return fileInfoMapper.selectList(wrapper);
+        return fileInfoMapper.selectFileList(fileInfoQuery);
     }
 
     @Override
@@ -308,6 +253,121 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
                 .le(fileInfoQuery.getCreateTimeEnd() != null, FileInfo::getCreateTime, fileInfoQuery.getCreateTimeEnd()));
 
         return Math.toIntExact(count);
+    }
+
+    @Override
+    public FileInfo newFolder(String filePid, String userId, String folderName) {
+        checkFileName(filePid, userId, folderName, FileFolderTypeEnums.FOLDER.getType());
+        LocalDateTime now = LocalDateTime.now();
+        FileInfo fileInfo = new FileInfo();
+        fileInfo.setFileId(StringTools.getRandomString(Constants.LENGTH_10));
+        fileInfo.setUserId(userId);
+        fileInfo.setFilePid(filePid);
+        fileInfo.setFileName(folderName);
+        fileInfo.setFolderType(FileFolderTypeEnums.FOLDER.getType());
+        fileInfo.setCreateTime(now);
+        fileInfo.setLastUpdateTime(now);
+        fileInfo.setStatus(FileStatusEnums.USING.getStatus());
+        fileInfo.setDelFlag(FileDelFlagEnums.USING.getFlag());
+        fileInfoMapper.insert(fileInfo);
+
+        long count = this.fileInfoMapper.selectCount(new LambdaQueryWrapper<FileInfo>()
+                .eq(FileInfo::getFilePid, filePid)
+                .eq(FileInfo::getUserId, userId)
+                .eq(FileInfo::getFileName, folderName)
+                .eq(FileInfo::getFolderType, FileFolderTypeEnums.FOLDER.getType())
+                .eq(FileInfo::getDelFlag, FileDelFlagEnums.USING.getFlag()));
+        if (count > 1) {
+            throw new BusinessException("文件夹" + folderName + "已经存在");
+        }
+        fileInfo.setFileName(folderName);
+        fileInfo.setLastUpdateTime(now);
+        return fileInfo;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public FileInfo rename(String fileId, String userId, String fileName) {
+        FileInfo fileInfo = fileInfoMapper.selectByFileIdAndUserId(fileId, userId);
+
+        if (fileInfo == null) {
+            throw new BusinessException("文件被删除或不存在");
+        }
+        if (fileInfo.getFileName().equals(fileName)) {
+            return fileInfo; // 文件名未变化，直接返回
+        }
+
+        String filePid = fileInfo.getFilePid();
+        checkFileName(filePid, userId, fileName, fileInfo.getFolderType());
+
+
+        // 3. 处理文件后缀（如果是文件类型）
+        if (FileFolderTypeEnums.FILE.getType().equals(fileInfo.getFolderType())) {
+            String suffix = StringTools.getFileSuffix(fileInfo.getFileName());
+            if (!fileName.endsWith(suffix)) { // 防止重复追加
+                fileName = fileName + suffix;
+            }
+        }
+        LocalDateTime now = LocalDateTime.now();
+        LambdaUpdateWrapper<FileInfo> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(FileInfo::getFileId, fileId)
+                .eq(FileInfo::getUserId, userId)
+                .set(FileInfo::getFileName, fileName)
+                .set(FileInfo::getLastUpdateTime, now);
+        int update = fileInfoMapper.update(null, updateWrapper);// 传入 null 表示不依赖实体对象
+        if (update != 1) {
+            throw new BusinessException("服务器繁忙，修改文件名失败");
+        }
+
+        fileInfo.setFileName(fileName);
+        fileInfo.setLastUpdateTime(now);
+        return fileInfo;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void changeFileFolder(String fileIds, String filePid, String userId) {
+        if (fileIds.equals(filePid)){
+            throw new BusinessException(ResponseCodeEnum.CODE_600);
+        }
+        if (Constants.ZERO_STR.equals(filePid)){
+            FileInfo fileInfo = fileInfoMapper.selectByFileIdAndUserId(fileIds, userId);
+            if (fileInfo == null || !FileDelFlagEnums.USING.getFlag().equals(fileInfo.getDelFlag())) {
+                throw new BusinessException(ResponseCodeEnum.CODE_600);
+            }
+        }
+        String[] fileIdArray = fileIds.split(",");
+
+        FileInfoQuery query = new FileInfoQuery();
+        query.setFilePid(filePid);
+        query.setUserId(userId);
+        List<FileInfo> dbFileList = fileInfoService.findListByParam(query);
+
+        Map<String, FileInfo> dbFileNameMap = dbFileList.stream().collect(Collectors.toMap(FileInfo::getFileName, Function.identity(), (file1, file2) -> file2));
+        //查询选中的文件
+        query = new FileInfoQuery();
+        query.setUserId(userId);
+        query.setFileIdArray(fileIdArray);
+        List<FileInfo> selectFileList = fileInfoService.findListByParam(query);
+
+        LambdaUpdateWrapper<FileInfo> updateWrapper = null;
+        //将所选文件重命名
+        for (FileInfo item : selectFileList) {
+            FileInfo rootFileInfo = dbFileNameMap.get(item.getFileName());
+            updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.eq(FileInfo::getFileId, item.getFileId())
+                    .eq(FileInfo::getUserId, userId);
+            //文件名已经存在，重命名被还原的文件名
+
+            if (rootFileInfo != null) {
+                String fileName = StringTools.rename(item.getFileName());
+                updateWrapper .set(FileInfo::getFileName, fileName);
+            }
+            updateWrapper.set(FileInfo::getFilePid,filePid);
+
+            fileInfoMapper.update(null, updateWrapper);
+        }
+
     }
 
 
@@ -349,7 +409,7 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             throw new BusinessException(ResponseCodeEnum.CODE_904);
         }
         UserSpaceDto spaceDto = redisComponent.getUserSpaceUse(webUserDto.getUserId());
-        spaceDto.setUserSpace(spaceDto.getUserSpace() + tempSize);
+        spaceDto.setUseSpace(spaceDto.getUseSpace() + tempSize);
         redisComponent.saveUserSpaceUse(webUserDto.getUserId(), spaceDto);
     }
 
@@ -374,11 +434,7 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
         String cover = null;
         FileTypeEnums fileTypeEnum = null;
 
-//        FileInfo fileInfo = fileInfoMapper.selectByFileIdAndUserId(fileId, webUserDto.getUserId());
-        LambdaQueryWrapper<FileInfo> wrapper = new LambdaQueryWrapper<FileInfo>();
-        wrapper.eq(FileInfo::getFileId, fileId).eq(FileInfo::getFileId, fileId);
-
-        FileInfo fileInfo = fileInfoMapper.selectOne(wrapper);
+        FileInfo fileInfo = fileInfoMapper.selectByFileIdAndUserId(fileId, webUserDto.getUserId());
 
         try {
             if (fileInfo == null || !FileStatusEnums.TRANSFER.getStatus().equals(fileInfo.getStatus())) {
@@ -505,6 +561,18 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
         ProcessUtils.executeCommand(cmd, false);
         //删除index.ts
         new File(tsPath).delete();
+    }
+
+    private void checkFileName(String filePid, String userId, String fileName, Integer folderType) {
+        long count = this.fileInfoMapper.selectCount(new LambdaQueryWrapper<FileInfo>()
+                .eq(FileInfo::getFolderType, folderType)
+                .eq(FileInfo::getFileName, fileName)
+                .eq(FileInfo::getFilePid, filePid)
+                .eq(FileInfo::getUserId, userId)
+                .eq(FileInfo::getDelFlag, FileDelFlagEnums.USING.getFlag()));
+        if (count > 0) {
+            throw new BusinessException("此目录下已存在同名文件，请修改名称");
+        }
     }
 }
 

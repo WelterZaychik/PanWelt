@@ -30,4 +30,10 @@ public interface FileInfoService extends IService<FileInfo> {
     List<FileInfo> findListByParam(FileInfoQuery fileInfoQuery);
 
     Integer findCountByParam(FileInfoQuery fileInfoQuery);
+
+    FileInfo newFolder(String filePid, String userId, String fileName);
+
+    FileInfo rename(String fileId, String userId, String fileName);
+
+    void changeFileFolder(String fileIds, String filePid, String userId);
 }

@@ -32,6 +32,115 @@
         del_flag
     </sql>
 
+    <sql id="base_condition_filed">
+        <if test="fileId != null and fileId!=''">
+            and file_id = #{fileId}
+        </if>
+        <if test="userId != null and userId!=''">
+            and user_id = #{userId}
+        </if>
+        <if test="fileMd5 != null and fileMd5!=''">
+            and file_md5 = #{fileMd5}
+        </if>
+        <if test="filePid != null and filePid!=''">
+            and file_pid = #{filePid}
+        </if>
+        <if test="fileSize != null">
+            and file_size = #{fileSize}
+        </if>
+        <if test="fileName != null and fileName!=''">
+            and file_name = #{fileName}
+        </if>
+        <if test="fileCover != null and fileCover!=''">
+            and file_cover = #{fileCover}
+        </if>
+        <if test="filePath != null and filePath!=''">
+            and file_path = #{filePath}
+        </if>
+        <if test="createTime != null and createTime!=''">
+            <![CDATA[ and  create_time=str_to_date(#{createTime}, '%Y-%m-%d') ]]>
+        </if>
+        <if test="lastUpdateTime != null and lastUpdateTime!=''">
+            <![CDATA[ and  last_update_time=str_to_date(#{lastUpdateTime}, '%Y-%m-%d') ]]>
+        </if>
+        <if test="folderType != null">
+            and folder_type = #{folderType}
+        </if>
+        <if test="fileCategory != null">
+            and file_category = #{fileCategory}
+        </if>
+        <if test="fileType != null">
+            and file_type = #{fileType}
+        </if>
+        <if test="status != null">
+            and status = #{status}
+        </if>
+        <if test="recoveryTime != null and recoveryTime!=''">
+            <![CDATA[ and  recovery_time=str_to_date(#{recoveryTime}, '%Y-%m-%d') ]]>
+        </if>
+        <if test="delFlag != null">
+            and del_flag = #{delFlag}
+        </if>
+        <if test="fileIdArray!=null and fileIdArray.length>0">
+            and file_id in(<foreach collection="fileIdArray" item="item" separator=",">#{item}</foreach>)
+        </if>
+        <if test="filePidArray!=null and filePidArray.length>0">
+            and file_pid in(<foreach collection="filePidArray" item="item" separator=",">#{item}</foreach>)
+        </if>
+        <if test="excludeFileIdArray!=null and excludeFileIdArray.length>0">
+            and file_id not in(<foreach collection="excludeFileIdArray" separator="," item="item">#{item}</foreach>)
+        </if>
+    </sql>
+
+    <!-- 通用查询条件列-->
+    <sql id="query_condition">
+        <where>
+            <include refid="base_condition_filed"/>
+            <if test="fileIdFuzzy!= null  and fileIdFuzzy!=''">
+                and file_id like concat('%', #{fileIdFuzzy}, '%')
+            </if>
+            <if test="userIdFuzzy!= null  and userIdFuzzy!=''">
+                and user_id like concat('%', #{userIdFuzzy}, '%')
+            </if>
+            <if test="fileMd5Fuzzy!= null  and fileMd5Fuzzy!=''">
+                and file_md5 like concat('%', #{fileMd5Fuzzy}, '%')
+            </if>
+            <if test="filePidFuzzy!= null  and filePidFuzzy!=''">
+                and file_pid like concat('%', #{filePidFuzzy}, '%')
+            </if>
+            <if test="fileNameFuzzy!= null  and fileNameFuzzy!=''">
+                and file_name like concat('%', #{fileNameFuzzy}, '%')
+            </if>
+            <if test="fileCoverFuzzy!= null  and fileCoverFuzzy!=''">
+                and file_cover like concat('%', #{fileCoverFuzzy}, '%')
+            </if>
+            <if test="filePathFuzzy!= null  and filePathFuzzy!=''">
+                and file_path like concat('%', #{filePathFuzzy}, '%')
+            </if>
+            <if test="createTimeStart!= null and createTimeStart!=''">
+                <![CDATA[ and  create_time>=str_to_date(#{createTimeStart}, '%Y-%m-%d') ]]>
+            </if>
+            <if test="createTimeEnd!= null and createTimeEnd!=''">
+                <![CDATA[ and  create_time< date_sub(str_to_date(#{createTimeEnd},'%Y-%m-%d'),interval -1 day) ]]>
+            </if>
+            <if test="lastUpdateTimeStart!= null and lastUpdateTimeStart!=''">
+                <![CDATA[ and  last_update_time>=str_to_date(#{lastUpdateTimeStart}, '%Y-%m-%d') ]]>
+            </if>
+            <if test="lastUpdateTimeEnd!= null and lastUpdateTimeEnd!=''">
+                <![CDATA[ and  last_update_time< date_sub(str_to_date(#{lastUpdateTimeEnd},'%Y-%m-%d'),interval -1 day) ]]>
+            </if>
+            <if test="recoveryTimeStart!= null and recoveryTimeStart!=''">
+                <![CDATA[ and  recovery_time>=str_to_date(#{recoveryTimeStart}, '%Y-%m-%d') ]]>
+            </if>
+            <if test="recoveryTimeEnd!= null and recoveryTimeEnd!=''">
+                <![CDATA[ and  recovery_time< date_sub(str_to_date(#{recoveryTimeEnd},'%Y-%m-%d'),interval -1 day) ]]>
+            </if>
+            <if test="queryExpire!=null and queryExpire">
+                <![CDATA[  and recovery_time< date_sub(now(),interval 10 day)]]>
+            </if>
+        </where>
+    </sql>
+
     <update id="updateFileStatusWithOldStatus">
         update file_info
         <set>
@@ -89,5 +198,22 @@
         select
         <include refid="Base_Column_List"/>
         from file_info where file_id=#{fileId} and user_id=#{userId}
+    </select>
+
+    <select id="selectFileList" resultType="asia.welter.entity.po.FileInfo">
+        SELECT
+        <include refid="Base_Column_List"/>
+        <if test="queryNickName!=null and queryNickName">
+            ,(select nick_name from user_info u where u.user_id = f.user_id) nickName
+        </if>
+        FROM file_info f
+        <include refid="query_condition"/>
+        <if test="orderBy!=null">
+            order by ${orderBy}
+        </if>
+        <if test="simplePage!=null">
+            limit #{simplePage.start},#{simplePage.end}
+        </if>
+
     </select>
 </mapper>
